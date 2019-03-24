@@ -1,58 +1,32 @@
-# https://minerva.ugent.be/courses2018/C00171902018/document/Project/Fuzzy_LEM2/Rule_induction__2005_.pdf?cidReq=C00171902018
-# http://logic.mimuw.edu.pl/Grant2003/prace/FRSMBazan1.pdf
-# https://github.com/paudan/scikit-roughsets
-# https://minerva.ugent.be/main/document/document.php?curdirpath=%2FProject%2FFuzzy_LEM2&cidReq=C00171902018
-# https://www.researchgate.net/publication/238582946_Machine_learning_an_Artificial_Intelligence_approach_Volume_2
 
-from typing import List, Set, Iterable, NewType
+from typing import List, Set
 
 import numpy as np
 
-# 0: Temperature
-# 1: Headache
-# 2: Weakness
-# 3: Nausea
-
-CaseIndex = NewType('CaseIndex', int)
-AttributeIndex = NewType('AttributeIndex', int)
+from eddy.shared import AttributeIndex, Partition, CaseIndex
 
 
-class Partition():
+def lem1(U):
     """
-    https://en.wikipedia.org/wiki/Partition_of_a_set
+    Generate a ruleset for dataset U
+
+    Parameters
+    ----------
+    U : array_like
+        A dataset with nominal attributes represented as a (numpy) matrix.
+        The last column is assumed to be the decision.
+        The dataset is assumed to be consistent.
+
+    Returns
+    -------
+    rule_set : list of Rule
     """
-
-    def __init__(self, partition: Iterable[Set[CaseIndex]], size=None):
-        self.partition = partition
-        if size:
-            self.size = size
-        else:
-            self.size = len(set().union(*partition))  # type: ignore
-
-    def is_finer(self, partition: 'Partition') -> bool:
-        for subset in self.partition:
-            for other_subset in partition.partition:
-                if subset.issubset(other_subset):
-                    break
-            else:
-                return False
-        return True
+    covering = global_covering(U)
+    specific_rules = covering[:, covering]
+    raise Exception("Not impemented yet.")
 
 
-def partition_matrix(M):
-    unique, inverse = np.unique(M, axis=0, return_inverse=True)
-    print(M)
-    print(unique)
-    print(inverse)
-    pass
-
-
-def lem1(M):
-    covering = global_covering(M)
-    return covering
-
-
-def global_covering(U):
+def global_covering(U) -> List[AttributeIndex]:
     """
     Generate a global covering for a dataset U
 
@@ -60,12 +34,13 @@ def global_covering(U):
     ----------
     U : array_like
         A dataset with nominal attributes represented as a (numpy) matrix.
-        The last column is assumed to be the decision
+        The last column is assumed to be the decision.
 
     Returns
     -------
     global_covering : list
-        A list of column indexes forming a global covering for U
+        A list of column indexes forming a global covering for U.
+        This will be the empty list in case the dataset is inconsistent.
     """
     d_part = elementary_sets(U, [U.shape[1] - 1])
     return global_covering_part(U[:, :-1], Partition(d_part))
