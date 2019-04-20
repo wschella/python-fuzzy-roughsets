@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 numpy = "*"
 scikit-roughsets = {editable = true, git = "https://github.com/paudan/scikit-roughsets.git"}
+scikit-learn = "*"
 
 [dev-packages]
 pylint = "*"

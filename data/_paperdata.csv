@@ -1,0 +1,8 @@
+Temperature(N),Headache(N),Weakness(N),Nausea(N),Flu(N)
+very_high,yes,yes,no,yes
+high,yes,no,yes,yes
+normal,no,no,no,no
+normal,yes,yes,yes,yes
+high,no,yes,no,yes
+high,no,no,no,no
+normal,no,yes,no,no
