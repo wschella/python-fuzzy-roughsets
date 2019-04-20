@@ -51,7 +51,7 @@ def indiscernability_matrix(U, as_indexes=False):
     Returns
     -------
     indiscernability_matrix : array_like
-        Given a (n, m) int matrix, return a (n, n, m) bool matrix where an
+        Given an (n, m) int matrix, return a (n, n, m) bool matrix where an
         entrie i, j, a is boolean signaling wether U[i][a] differs from U[j][a]
         in the case where U[i][decision] != U[j][decision]
     """
@@ -73,3 +73,28 @@ def indiscernability_matrix(U, as_indexes=False):
         return (M, R)
     else:
         return M
+
+
+def indiscernability_relation(U, attributes: List[AttributeIndex]):
+    """
+    Creates the indiscernability relation R of U with respect to attributes
+
+    Parameters
+    ----------
+    U : array_like
+    attributes : list of int
+        List of attributes to base the indiscernability relation on
+
+    Returns
+    -------
+    indiscernability_relation : array_like
+        Given an (n, m) int matrix, return an (n, n) boolean matrix where each
+        entry (i, j) represents whether U[i] and U[j] are discernible with
+        with respect to the given attributes
+    """
+    size, _ = U.shape
+    R = np.zeros((size, size), dtype=bool)
+    for i in range(size):
+        for j in range(i + 1, size):
+            R[i][j] = np.any((U[i, attributes] - U[j, attributes]))
+    return R
