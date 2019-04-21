@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-numpy = "*"
+numpy = "^1.13.0"
 scikit-roughsets = {editable = true, git = "https://github.com/paudan/scikit-roughsets.git"}
 scikit-learn = "*"
 

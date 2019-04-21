@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def paperdata():
+def _paperdata(path):
     converters = {
         b'very_high': 4,
         b'high': 3,
@@ -15,8 +15,16 @@ def paperdata():
     def convert(s):
         return converters[s]
 
-    data = np.genfromtxt(open('data/_paperdata.csv', "rb"),
+    data = np.genfromtxt(open(path, "rb"),
                          dtype=int, delimiter=",",
                          skip_header=1,
                          converters={0: convert, 1: convert, 2: convert, 3: convert, 4: convert})
     return (data[:, :-1], data[:, -1])
+
+
+def paperdata():
+    return _paperdata('data/_paperdata.csv')
+
+
+def paperdata2():
+    return _paperdata('data/_paperdata2.csv')

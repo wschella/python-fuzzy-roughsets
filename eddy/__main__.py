@@ -1,11 +1,11 @@
 
 import numpy as np
-from scikit_roughsets.roughsets import RoughSetsReducer
+
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
 from eddy.lem2 import LEM2Classifier
-from eddy.datasets import paperdata
+from eddy.datasets import paperdata, paperdata2
 
 names = [
     "LEM2"
@@ -41,6 +41,17 @@ def main():
             print(classification_report(y_test, y_pred))
 
 
+def kladblock():
+    X, y = paperdata2()
+    print(X)
+    print(most_frequent(X))
+    print(find_optimal_block(X, X))
+    # (unique, count) = np.unique(X, return_counts=True, axis=1)
+    # print(unique)
+    # print(count)
+
+
 if __name__ == '__main__':
     # execute only if run as the entry point into the program
-    main()
+    # main()
+    kladblock()

@@ -108,7 +108,7 @@ def get_local_covering(U, lower_approximation):
 
         # Construct minimal complex
         while not blocks or not blocksetblock(blocks).issubset(B):
-            pass
+            (unique, counts) = np.unique(U[G], return_counts=True)
 
         # Make minimal complex actually minimal
         min_complex = blocks.copy()
@@ -127,3 +127,49 @@ def get_local_covering(U, lower_approximation):
             covering = covering - blocks
 
     return covering
+
+
+def find_optimal_block(Universe, Subset):
+    # print(Universe)
+    # print(Subset)
+    frequency = most_frequent(Subset)
+    max_freq = np.max(frequency[:, 1])
+    max_freq_occurrences = np.argwhere(frequency[:, 1] == max_freq).flatten()
+    # max_freq = frequency[:, 1][max_freq_occurrences]
+
+    # No ties
+    # print(max_freq_occurrences)
+    if max_freq_occurrences.size == 1:
+        col = max_freq_occurrences[0]
+        max_freq_value = frequency[col, 0]
+        return (col, max_freq_value)
+
+    # Ties
+    u_occurrences = np.array([
+        np.count_nonzero(Universe[:, col] == frequency[col, 0])
+        for col in max_freq_occurrences
+    ])
+    # print(frequency)
+    # print("u_occurrences", u_occurrences)
+    min_freq = np.min(u_occurrences)
+    min_freq_occurrences = max_freq_occurrences[np.argwhere(u_occurrences == min_freq).flatten()]
+    # print(min_freq_occurrences)
+
+    # If there's ties again, we just return the first one, if there's no ties
+    # we do the same
+    col = min_freq_occurrences[0]
+    min_freq_value = frequency[col, 0]
+    return (col, min_freq_value)
+
+
+def most_frequent(M):
+    return np.array([
+        best_pair(np.unique(col, return_counts=True))
+        for col in M.T
+    ], dtype=int)
+
+
+def best_pair(count_data):
+    (items, counts) = count_data
+    i = np.argmax(counts)
+    return np.asarray([items[i], counts[i]])
