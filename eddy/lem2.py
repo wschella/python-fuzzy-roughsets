@@ -1,9 +1,12 @@
 import numpy as np
 
-from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 from sklearn.metrics import euclidean_distances
+
+from eddy.shared import elementary_sets
+from eddy.roughsets import lower_approximation
 
 
 class LEM2Classifier(BaseEstimator, ClassifierMixin):
@@ -44,6 +47,15 @@ class LEM2Classifier(BaseEstimator, ClassifierMixin):
 
         self.X_ = X
         self.y_ = y
+        print(self.X_, self.classes_)
+
+        all_attributes = list(range(self.X_.shape[0]))
+        for class_ in self.classes_:
+            concept = self.y_ == class_
+            print(concept, class_)
+            lower = lower_approximation(self.X_, all_attributes, concept)
+            pass
+
         # Return the classifier
         return self
 
