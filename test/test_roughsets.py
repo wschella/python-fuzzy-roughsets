@@ -27,6 +27,6 @@ class TestLowerApproximationMatrix(unittest.TestCase):
         attributes = [0, 1, 2, 3, 4]
 
         np.testing.assert_array_equal(
-            eddy.lower_approximation(self.wiki_example, attributes, target),
+            eddy.get_lower_approximation(self.wiki_example, attributes, target),
             [0, 1, 3]
         )

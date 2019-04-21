@@ -1,7 +1,7 @@
 from eddy.shared import elementary_sets
 
 
-def lower_approximation(U, attributes, target):
+def get_lower_approximation(U, attributes, target):
     """ Find the lower approximation of a target set in universe U with respect
     to the indiscernability relation defined by attributes.
 
