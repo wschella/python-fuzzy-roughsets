@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
-from eddy.lem2 import LEM2Classifier
+from eddy.lem2 import LEM2Classifier, find_optimal_block
 from eddy.datasets import paperdata, paperdata2
 
 names = [
@@ -43,8 +43,8 @@ def main():
 
 def kladblock():
     X, y = paperdata2()
-    print(X)
-    print(most_frequent(X))
+    # print(X)
+    # print(most_frequent(X))
     print(find_optimal_block(X, X))
     # (unique, count) = np.unique(X, return_counts=True, axis=1)
     # print(unique)

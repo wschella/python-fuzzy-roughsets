@@ -1,4 +1,4 @@
-from typing import Set
+from typing import Set, List, Tuple
 
 import numpy as np
 
@@ -129,47 +129,45 @@ def get_local_covering(U, lower_approximation):
     return covering
 
 
-def find_optimal_block(Universe, Subset):
-    # print(Universe)
-    # print(Subset)
-    frequency = most_frequent(Subset)
-    max_freq = np.max(frequency[:, 1])
-    max_freq_occurrences = np.argwhere(frequency[:, 1] == max_freq).flatten()
-    # max_freq = frequency[:, 1][max_freq_occurrences]
+def find_optimal_block(Universe, Subset) -> Tuple[int, int]:
+    best_pairs: List[Tuple[int, int]] = []
+    current_max = 0
+    for attr, col in enumerate(Subset.T):
+        values, counts, *_ = np.unique(col, return_counts=True)
+        max_freq = np.max(counts)
+        if max_freq > current_max:
+            current_max = max_freq
+            best_pairs = [(attr, value) for value in values[np.where(counts == max_freq)]]
+        else:
+            best_pairs += [(attr, value) for value in values[np.where(counts >= current_max)]]
 
     # No ties
-    # print(max_freq_occurrences)
-    if max_freq_occurrences.size == 1:
-        col = max_freq_occurrences[0]
-        max_freq_value = frequency[col, 0]
-        return (col, max_freq_value)
+    if len(best_pairs) == 1:
+        return best_pairs[0]
 
     # Ties
-    u_occurrences = np.array([
-        np.count_nonzero(Universe[:, col] == frequency[col, 0])
-        for col in max_freq_occurrences
+    occurrences_in_universe = np.array([
+        np.count_nonzero(Universe[:, col] == value)
+        for col, value in best_pairs
     ])
-    # print(frequency)
-    # print("u_occurrences", u_occurrences)
-    min_freq = np.min(u_occurrences)
-    min_freq_occurrences = max_freq_occurrences[np.argwhere(u_occurrences == min_freq).flatten()]
-    # print(min_freq_occurrences)
+    min_freq = np.min(occurrences_in_universe)
+    new_best_pairs = np.array(best_pairs)[np.argwhere(
+        occurrences_in_universe == min_freq).flatten()]
 
     # If there's ties again, we just return the first one, if there's no ties
     # we do the same
-    col = min_freq_occurrences[0]
-    min_freq_value = frequency[col, 0]
-    return (col, min_freq_value)
+    return (new_best_pairs[0][0], new_best_pairs[0][1])
 
 
-def most_frequent(M):
-    return np.array([
-        best_pair(np.unique(col, return_counts=True))
-        for col in M.T
-    ], dtype=int)
+# def most_frequent(M) -> List[Tuple[int, int]]:
+#     return [
+#         (attr, value)
+#         for attr, col in enumerate(M.T)
+#         for value in best_values(np.unique(col, return_counts=True))
+#     ]
 
 
-def best_pair(count_data):
-    (items, counts) = count_data
-    i = np.argmax(counts)
-    return np.asarray([items[i], counts[i]])
+# def best_values(count_data) -> List[int]:
+#     (values, counts) = count_data
+#     max_freq = np.max(counts)
+#     return values[np.where(counts == max_freq)]

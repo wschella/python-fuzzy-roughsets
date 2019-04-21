@@ -46,10 +46,10 @@ class TestFindOptimalBlock(unittest.TestCase):
             (1, 0)
         )
 
-    def test_always_tie_case_proper_subset(self):
+    def test_always_tie_proper_subset(self):
         self.assertEqual(
-            eddy.find_optimal_block(self.table1_1_tie, self.table1_1_tie[[0, 1, 2, 3, 4, 6]]),
-            (1, 1)
+            eddy.find_optimal_block(self.table1_1_tie, self.table1_1_tie[[4]]),
+            (0, 2)
         )
 
     def test_use_universe(self):
