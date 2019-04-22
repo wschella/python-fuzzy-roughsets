@@ -1,5 +1,7 @@
 from typing import Set, List, Tuple, Dict
+from functools import reduce
 import collections
+import operator
 
 import numpy as np
 
@@ -8,7 +10,7 @@ from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 from sklearn.metrics import euclidean_distances
 
-from eddy.roughsets import get_lower_approximation
+from eddy.roughsets import get_lower_approximation_mask
 
 
 class LEM2Classifier(BaseEstimator, ClassifierMixin):
@@ -54,10 +56,10 @@ class LEM2Classifier(BaseEstimator, ClassifierMixin):
         all_attributes = list(range(self.X_.shape[0]))
         for class_ in self.classes_:
             concept = self.y_ == class_
-            print(concept, class_)
-            lower = get_lower_approximation(self.X_, all_attributes, concept)
+            print("\n", class_, concept)
+            lower = get_lower_approximation_mask(self.X_, all_attributes, concept)
             covering = get_local_covering(self.X_, lower)
-            pass
+            print(covering)
 
         # induce rules
 
@@ -90,50 +92,66 @@ class LEM2Classifier(BaseEstimator, ClassifierMixin):
 AVPair = Tuple[int, int]
 
 
-def get_local_covering(U, lower_approximation):
+def get_local_covering(U, lower_approximation_mask):
     # Cases in the lower approximation
-    B: Set[int] = set(lower_approximation)
+    B: Set[int] = set(np.flatnonzero(lower_approximation_mask))
 
     # Elements not yet covered
-    G: Set[int] = set(lower_approximation)
+    G: Set[int] = set(np.flatnonzero(lower_approximation_mask))
 
     # Found minimal complexes
-    Cs: Set[Set[int]] = set()
+    Cs: Set[Set[AVPair]] = set()
 
-    def block(attr: int, value: int) -> Set[int]:
-        return set(np.where(U[:, attr] == value))
+    def block_mask(pair: AVPair) -> List[bool]:
+        attr, value = pair
+        return (U[:, attr] == value)
 
-    def blocksetblock(blocks: Set[Set[int]]) -> Set[int]:
-        return set.intersection(*blocks)
+    def blockset_mask(blocks: Set[AVPair]) -> List[bool]:
+        return reduce(
+            operator.and_,
+            map(block_mask, blocks),
+            np.ones((U.shape[0],), dtype=bool)
+        )
+
+    def covering_block(covering: Set[Set[AVPair]]) -> Set[int]:
+        return set(np.flatnonzero(reduce(
+            operator.or_,
+            map(blockset_mask, covering),
+            np.ones((U.shape[0],), dtype=bool)
+        )))
+
+    def get_complex_block(complex_):
+        return set(np.flatnonzero(blockset_mask(complex_)))
 
     # Construct covering
     while G:
-        blocks: Set[Set[int]] = set()
+        complex_: Set[AVPair] = set()
         visited: Set[AVPair] = set()
 
         # Construct minimal complex
-        while not blocks or not blocksetblock(blocks).issubset(B):
-            (attr, value) = find_optimal_block(U, U[G], visited)
-            block = set(np.where(U[:, attr] == value))
-            blocks.add(block)
+        while not complex_ or not get_complex_block(complex_).issubset(B):
+            (attr, value) = find_optimal_block(U, U[list(G)], visited)
+            block = set(np.where(U[:, attr] == value)[0])
             G.intersection_update(block)
+            complex_.add((attr, value))
             visited.add((attr, value))
 
         # Make minimal complex actually minimal
-        min_complex = blocks.copy()
-        for block in blocks:
-            if blocksetblock(min_complex - set([block])).issubset(B):
-                min_complex = min_complex - set([block])
+        min_complex = complex_.copy()
+        for av_pair in complex_:
+            complex_block = get_complex_block(min_complex - set([av_pair]))
+            if complex_block.issubset(B):
+                min_complex.remove(av_pair)
 
-        Cs.add(set.intersection(*min_complex))
-        G = B - set.union(*Cs)
+        Cs.add(frozenset(min_complex))
+        G = B - covering_block(Cs)
 
     # Make covering minimal
-    covering: Set[Set[int]] = Cs.copy()
-    for blocks in Cs:
-        covering_to_test: Set[Set[int]] = covering - set([blocks])
-        if set.union(*covering_to_test) == B:
-            covering = covering - blocks
+    covering: Set[Set[AVPair]] = Cs.copy()
+    for complex_ in Cs:
+        covering_to_test: Set[Set[AVPair]] = covering - set([complex_])
+        if covering_block(covering_to_test) == B:
+            covering = covering - complex_
 
     return covering
 
@@ -147,8 +165,12 @@ def find_optimal_block(Universe, Subset, visited_pairs: Set[AVPair]) -> AVPair:
 
     current_max = 0
     for attr, col in enumerate(Subset.T):
-        filters = np.isin(col, np.array(visited[attr]), assume_unique=True, invert=True)
+        filters = np.isin(col, np.array(list(visited[attr])), invert=True)
         values, counts, *_ = np.unique(col[filters], return_counts=True)
+
+        if values.size == 0:  # All pairs filtered out
+            continue
+
         max_freq = np.max(counts)
         if max_freq > current_max:
             current_max = max_freq

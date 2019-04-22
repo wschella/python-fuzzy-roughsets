@@ -36,16 +36,16 @@ def main():
 
         for name, clf in zip(names, classifiers):
             clf.fit(X_train, y_train)
-            y_pred = clf.predict(X_test)
-            print(name)
-            print(classification_report(y_test, y_pred))
+            # y_pred = clf.predict(X_test)
+            # print(name)
+            # print(classification_report(y_test, y_pred))
 
 
 def kladblock():
     X, y = paperdata2()
     # print(X)
     # print(most_frequent(X))
-    print(find_optimal_block(X, X))
+    # print(find_optimal_block(X, X, set()))
     # (unique, count) = np.unique(X, return_counts=True, axis=1)
     # print(unique)
     # print(count)
@@ -53,5 +53,5 @@ def kladblock():
 
 if __name__ == '__main__':
     # execute only if run as the entry point into the program
-    # main()
-    kladblock()
+    main()
+    # kladblock()
