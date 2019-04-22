@@ -1,4 +1,5 @@
-from typing import Set, List, Tuple
+from typing import Set, List, Tuple, Dict
+import collections
 
 import numpy as np
 
@@ -86,6 +87,9 @@ class LEM2Classifier(BaseEstimator, ClassifierMixin):
         return self.y_[closest]
 
 
+AVPair = Tuple[int, int]
+
+
 def get_local_covering(U, lower_approximation):
     # Cases in the lower approximation
     B: Set[int] = set(lower_approximation)
@@ -105,10 +109,15 @@ def get_local_covering(U, lower_approximation):
     # Construct covering
     while G:
         blocks: Set[Set[int]] = set()
+        visited: Set[AVPair] = set()
 
         # Construct minimal complex
         while not blocks or not blocksetblock(blocks).issubset(B):
-            (unique, counts) = np.unique(U[G], return_counts=True)
+            (attr, value) = find_optimal_block(U, U[G], visited)
+            block = set(np.where(U[:, attr] == value))
+            blocks.add(block)
+            G.intersection_update(block)
+            visited.add((attr, value))
 
         # Make minimal complex actually minimal
         min_complex = blocks.copy()
@@ -129,11 +138,17 @@ def get_local_covering(U, lower_approximation):
     return covering
 
 
-def find_optimal_block(Universe, Subset) -> Tuple[int, int]:
+def find_optimal_block(Universe, Subset, visited_pairs: Set[AVPair]) -> AVPair:
     best_pairs: List[Tuple[int, int]] = []
+
+    visited: Dict[int, Set[int]] = collections.defaultdict(set)
+    for attr, value in visited_pairs:
+        visited[attr].add(value)
+
     current_max = 0
     for attr, col in enumerate(Subset.T):
-        values, counts, *_ = np.unique(col, return_counts=True)
+        filters = np.isin(col, np.array(visited[attr]), assume_unique=True, invert=True)
+        values, counts, *_ = np.unique(col[filters], return_counts=True)
         max_freq = np.max(counts)
         if max_freq > current_max:
             current_max = max_freq
@@ -157,17 +172,3 @@ def find_optimal_block(Universe, Subset) -> Tuple[int, int]:
     # If there's ties again, we just return the first one, if there's no ties
     # we do the same
     return (new_best_pairs[0][0], new_best_pairs[0][1])
-
-
-# def most_frequent(M) -> List[Tuple[int, int]]:
-#     return [
-#         (attr, value)
-#         for attr, col in enumerate(M.T)
-#         for value in best_values(np.unique(col, return_counts=True))
-#     ]
-
-
-# def best_values(count_data) -> List[int]:
-#     (values, counts) = count_data
-#     max_freq = np.max(counts)
-#     return values[np.where(counts == max_freq)]

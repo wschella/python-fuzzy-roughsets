@@ -30,31 +30,31 @@ class TestFindOptimalBlock(unittest.TestCase):
 
     def test_regular_case(self):
         self.assertEqual(
-            eddy.find_optimal_block(self.table1_1_regular, self.table1_1_regular),
+            eddy.find_optimal_block(self.table1_1_regular, self.table1_1_regular, set()),
             (3, 0)
         )
 
     def test_regular_case_proper_subset(self):
         self.assertEqual(
-            eddy.find_optimal_block(self.table1_1_regular, self.table1_1_regular[[0, 1]]),
+            eddy.find_optimal_block(self.table1_1_regular, self.table1_1_regular[[0, 1]], set()),
             (1, 1)
         )
 
     def test_always_tie_case(self):
         self.assertEqual(
-            eddy.find_optimal_block(self.table1_1_tie, self.table1_1_tie),
+            eddy.find_optimal_block(self.table1_1_tie, self.table1_1_tie, set()),
             (1, 0)
         )
 
     def test_always_tie_proper_subset(self):
         self.assertEqual(
-            eddy.find_optimal_block(self.table1_1_tie, self.table1_1_tie[[4]]),
+            eddy.find_optimal_block(self.table1_1_tie, self.table1_1_tie[[4]], set()),
             (0, 2)
         )
 
     def test_use_universe(self):
         self.assertEqual(
-            eddy.find_optimal_block(self.table1_1_regular, self.table1_1_regular[[0, 1, 2]]),
+            eddy.find_optimal_block(self.table1_1_regular, self.table1_1_regular[[0, 1, 2]], set()),
             (1, 1)
         )
 
