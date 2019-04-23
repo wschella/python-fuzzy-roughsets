@@ -55,9 +55,8 @@ class LEM2Classifier(BaseEstimator, ClassifierMixin):
         self.y_ = y  # pylint: disable=attribute-defined-outside-init
         self.rules_ = np.zeros((self.classes_.size,),  # pylint: disable=attribute-defined-outside-init
                                dtype=object)
-        print(np.append(self.X_, self.y_.reshape((y.shape[0], 1)), axis=1))
 
-        all_attributes = list(range(self.X_.shape[0]))
+        all_attributes = list(range(self.X_.shape[1]))
         for class_index, class_ in enumerate(self.classes_):
             concept = np.flatnonzero(self.y_ == class_)
             lower = get_lower_approximation_mask(self.X_, all_attributes, concept)
@@ -85,14 +84,12 @@ class LEM2Classifier(BaseEstimator, ClassifierMixin):
         # Input validation
         X = check_array(X, dtype=int)
 
-        prediction = np.zeros((X.shape[0],), dtype=int)
-        print(self.rules_)
+        prediction = np.full((X.shape[0],), self.classes_[0], dtype=int)
         for case_index, case in enumerate(X):
             matches = lambda av: case[av[0]] == av[1]
             complex_matches = lambda complex_: all(map(matches, complex_))
             for class_index, class_ in enumerate(self.classes_):
                 if any(map(complex_matches, self.rules_[class_index])):
-                    print(case_index, class_)
                     prediction[case_index] = class_
                     break
 

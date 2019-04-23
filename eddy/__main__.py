@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 
 from eddy.lem2 import LEM2Classifier, find_optimal_block
+import eddy.datasets as data
 from eddy.datasets import paperdata, paperdata2
 
 names = [
@@ -16,7 +17,9 @@ classifiers = [
 ]
 
 datasets = [
-    paperdata()
+    # data.paperdata(),
+    # data.paperdata2(),
+    data.wisconsin(),
 ]
 
 
@@ -29,15 +32,20 @@ def test_clean_data(D):
 
 def main():
     for _ds_index, ds in enumerate(datasets):
-        X, y = ds
+        ((X, y), ds_name) = ds
+        print(f"====================== Evaluating dataset '{ds_name}' ======================")
         X_train, X_test, y_train, y_test = \
             train_test_split(X, y, test_size=.4, random_state=42)
-        # print(X_train, X_test)
+        print("Train")
+        print(np.append(X_train, y_train.reshape((y_train.shape[0], 1)), axis=1))
 
-        for name, clf in zip(names, classifiers):
+        print("Test")
+        print(np.append(X_test, y_test.reshape((y_test.shape[0], 1)), axis=1))
+
+        for c_name, clf in zip(names, classifiers):
+            print(f"---------------------- Using {c_name} ----------------------")
             clf.fit(X_train, y_train)
             y_pred = clf.predict(X_test)
-            print(name)
             print(classification_report(y_test, y_pred))
 
 
