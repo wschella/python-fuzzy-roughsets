@@ -36,9 +36,9 @@ def main():
 
         for name, clf in zip(names, classifiers):
             clf.fit(X_train, y_train)
-            # y_pred = clf.predict(X_test)
-            # print(name)
-            # print(classification_report(y_test, y_pred))
+            y_pred = clf.predict(X_test)
+            print(name)
+            print(classification_report(y_test, y_pred))
 
 
 def kladblock():

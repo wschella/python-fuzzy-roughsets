@@ -49,20 +49,20 @@ class LEM2Classifier(BaseEstimator, ClassifierMixin):
         # Check that X and y have correct shape
         X, y = check_X_y(X, y, dtype=int, multi_output=True)
         # Store the classes seen during fit
-        self.classes_ = unique_labels(y)
+        self.classes_ = unique_labels(y)  # pylint: disable=attribute-defined-outside-init
 
-        self.X_ = X
-        self.y_ = y
+        self.X_ = X  # pylint: disable=attribute-defined-outside-init
+        self.y_ = y  # pylint: disable=attribute-defined-outside-init
+        self.rules_ = np.zeros((self.classes_.size,),  # pylint: disable=attribute-defined-outside-init
+                               dtype=object)
         print(np.append(self.X_, self.y_.reshape((y.shape[0], 1)), axis=1))
 
         all_attributes = list(range(self.X_.shape[0]))
-        for class_ in self.classes_:
+        for class_index, class_ in enumerate(self.classes_):
             concept = np.flatnonzero(self.y_ == class_)
             lower = get_lower_approximation_mask(self.X_, all_attributes, concept)
             covering = get_local_covering(self.X_, lower)
-            print(covering)
-
-        # induce rules
+            self.rules_[class_index] = covering
 
         # Return the classifier
         return self
@@ -85,9 +85,18 @@ class LEM2Classifier(BaseEstimator, ClassifierMixin):
         # Input validation
         X = check_array(X, dtype=int)
 
-        closest = np.argmin(euclidean_distances(X, self.X_), axis=1)
-        print(closest)
-        return self.y_[closest]
+        prediction = np.zeros((X.shape[0],), dtype=int)
+        print(self.rules_)
+        for case_index, case in enumerate(X):
+            matches = lambda av: case[av[0]] == av[1]
+            complex_matches = lambda complex_: all(map(matches, complex_))
+            for class_index, class_ in enumerate(self.classes_):
+                if any(map(complex_matches, self.rules_[class_index])):
+                    print(case_index, class_)
+                    prediction[case_index] = class_
+                    break
+
+        return prediction
 
 
 AVPair = Tuple[int, int]
