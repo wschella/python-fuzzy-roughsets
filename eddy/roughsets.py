@@ -1,9 +1,11 @@
+from typing import List
+
 import numpy as np
 
 from eddy.shared import elementary_sets
 
 
-def get_lower_approximation(U, attributes, target):
+def get_lower_approximation(U, attributes: List[int], target: List[int]) -> List[int]:
     """ Find the lower approximation of a target set in universe U with respect
     to the indiscernability relation defined by attributes.
 
@@ -17,8 +19,8 @@ def get_lower_approximation(U, attributes, target):
         The target set we whish to approximate
     Returns
     -------
-    lower : ndarray, shape (n_samples,)
-        A mask for U for cases that are in the lower approximation
+    lower : ndarray, shape (n_lower_members,)
+        A array of indexes of members of the lower approximation
     """
     target_set = set(target)
     elementary = elementary_sets(U, attributes)
@@ -26,7 +28,7 @@ def get_lower_approximation(U, attributes, target):
     return np.array(sorted(list(set.union(*subsets_of_U))), dtype=int)
 
 
-def get_lower_approximation_mask(U, attributes, target):
+def get_lower_approximation_mask(U, attributes: List[int], target: List[int]) -> List[bool]:
     """ Find the lower approximation of a target set in universe U with respect
     to the indiscernability relation defined by attributes.
 

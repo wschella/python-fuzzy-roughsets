@@ -13,16 +13,13 @@ import numpy as np
 # 2: Weakness
 # 3: Nausea
 
-CaseIndex = NewType('CaseIndex', int)
-AttributeIndex = NewType('AttributeIndex', int)
-
 
 class Partition():
     """
     https://en.wikipedia.org/wiki/Partition_of_a_set
     """
 
-    def __init__(self, partition: Iterable[Set[CaseIndex]], size=None):
+    def __init__(self, partition: Iterable[Set[int]], size=None):
         self.partition = partition
         if size:
             self.size = size
@@ -100,7 +97,7 @@ class Partition():
 #     return R
 
 
-def elementary_sets(M, attributes: List[AttributeIndex]) -> List[Set[CaseIndex]]:
+def elementary_sets(M, attributes: List[int]) -> List[Set[int]]:
     """
     Find the elementary sets (equivalence classes) of M
 

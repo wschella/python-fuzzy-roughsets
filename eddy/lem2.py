@@ -4,6 +4,7 @@ import collections
 import operator
 
 import numpy as np
+import pysnooper
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
@@ -31,6 +32,7 @@ class LEM2Classifier(BaseEstimator, ClassifierMixin):
     def __init__(self):
         pass
 
+    @pysnooper.snoop('./logs/fit.log')
     def fit(self, X, y):
         """
         Parameters
@@ -51,12 +53,11 @@ class LEM2Classifier(BaseEstimator, ClassifierMixin):
 
         self.X_ = X
         self.y_ = y
-        print(self.X_, self.classes_)
+        print(np.append(self.X_, self.y_.reshape((y.shape[0], 1)), axis=1))
 
         all_attributes = list(range(self.X_.shape[0]))
         for class_ in self.classes_:
-            concept = self.y_ == class_
-            print("\n", class_, concept)
+            concept = np.flatnonzero(self.y_ == class_)
             lower = get_lower_approximation_mask(self.X_, all_attributes, concept)
             covering = get_local_covering(self.X_, lower)
             print(covering)
@@ -92,6 +93,7 @@ class LEM2Classifier(BaseEstimator, ClassifierMixin):
 AVPair = Tuple[int, int]
 
 
+@pysnooper.snoop('./logs/local_covering.log')
 def get_local_covering(U, lower_approximation_mask):
     # Cases in the lower approximation
     B: Set[int] = set(np.flatnonzero(lower_approximation_mask))
@@ -117,7 +119,7 @@ def get_local_covering(U, lower_approximation_mask):
         return set(np.flatnonzero(reduce(
             operator.or_,
             map(blockset_mask, covering),
-            np.ones((U.shape[0],), dtype=bool)
+            np.zeros((U.shape[0],), dtype=bool)
         )))
 
     def get_complex_block(complex_):
@@ -132,7 +134,7 @@ def get_local_covering(U, lower_approximation_mask):
         while not complex_ or not get_complex_block(complex_).issubset(B):
             (attr, value) = find_optimal_block(U, U[list(G)], visited)
             block = set(np.where(U[:, attr] == value)[0])
-            G.intersection_update(block)
+            G = G.intersection(block)
             complex_.add((attr, value))
             visited.add((attr, value))
 
