@@ -1,7 +1,7 @@
 
 from typing import List
 
-from eddy.shared import AttributeIndex, Partition, elementary_sets
+from eddy.shared import Partition, elementary_sets
 
 
 def lem1(U):
@@ -24,7 +24,7 @@ def lem1(U):
     raise Exception("Not impemented yet.")
 
 
-def global_covering(U) -> List[AttributeIndex]:
+def global_covering(U) -> List[int]:
     """
     Generate a global covering for a dataset U
 
@@ -44,7 +44,7 @@ def global_covering(U) -> List[AttributeIndex]:
     return global_covering_part(U[:, :-1], Partition(d_part))
 
 
-def global_covering_part(M, d_part: Partition) -> List[AttributeIndex]:
+def global_covering_part(M, d_part: Partition) -> List[int]:
     """
     Generate a global covering for M
 
@@ -61,10 +61,10 @@ def global_covering_part(M, d_part: Partition) -> List[AttributeIndex]:
     global_covering : list
         A list of column indexes forming a global covering for M
     """
-    A: List[AttributeIndex] = list(range(M.shape[1]))  # type: ignore
-    P: List[AttributeIndex] = list(range(M.shape[1]))  # type: ignore
+    A: List[int] = list(range(M.shape[1]))
+    P: List[int] = list(range(M.shape[1]))
     a_part = Partition(elementary_sets(M, A))
-    covering: List[AttributeIndex] = []
+    covering: List[int] = []
     if a_part.is_finer(d_part):
         for a in A:
             Q = P.copy()

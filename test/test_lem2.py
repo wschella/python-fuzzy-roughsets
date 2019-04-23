@@ -5,6 +5,32 @@ import numpy as np
 import eddy.lem2 as eddy
 
 
+class TestGetLocalCovering(unittest.TestCase):
+    def setUp(self):
+        # https://minerva.ugent.be/courses2018/C00171902018/document/Project/Fuzzy_LEM2/Rule_induction__2005_.pdf?cidReq=C00171902018
+        self.table1_1 = np.array([
+            [3, 1, 1, 0, 1],
+            [2, 1, 0, 1, 1],
+            [1, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1],
+            [2, 0, 1, 0, 1],
+            [2, 0, 0, 0, 0],
+            [1, 0, 1, 0, 0]
+        ])
+
+    def test_paper_case_pos(self):
+        self.assertEqual(
+            eddy.get_local_covering(self.table1_1[:, :-1], self.table1_1[:, -1] == 1),
+            set([frozenset([(1, 1)]), frozenset([(0, 2), (2, 1)])])
+        )
+
+    def test_paper_case_neg(self):
+        self.assertEqual(
+            eddy.get_local_covering(self.table1_1[:, :-1], self.table1_1[:, -1] == 0),
+            set([frozenset([(0, 1), (1, 0)]), frozenset([(1, 0), (2, 0)])])
+        )
+
+
 class TestFindOptimalBlock(unittest.TestCase):
     def setUp(self):
         # https://minerva.ugent.be/courses2018/C00171902018/document/Project/Fuzzy_LEM2/Rule_induction__2005_.pdf?cidReq=C00171902018
