@@ -3,10 +3,12 @@ import numpy as np
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+import scipy
 
 from eddy.lem2 import LEM2Classifier, find_optimal_block
+
 import eddy.datasets as data
-from eddy.datasets import paperdata, paperdata2
+import eddy.fuzzyroughsets as frs
 
 names = [
     "LEM2"
@@ -50,16 +52,23 @@ def main():
 
 
 def kladblock():
-    X, y = paperdata2()
+    X = np.array([
+        [4, 1, 1, 0],
+        [3, 1, 0, 1],
+        [2, 0, 0, 0],
+        [2, 1, 1, 1],
+        [3, 0, 1, 0],
+        [3, 0, 0, 0],
+        [2, 0, 1, 1]
+    ])
+    y = np.array([1, 1, 0, 1, 1, 0, 0])
+    concept = frs.fuzzy_concept(y, 1)
+    print(frs.get_lower_approximation(X, [0, 1, 2, 3], concept))
     # print(X)
-    # print(most_frequent(X))
-    # print(find_optimal_block(X, X, set()))
-    # (unique, count) = np.unique(X, return_counts=True, axis=1)
-    # print(unique)
-    # print(count)
+    # print(frs.fuzzy_indiscernability(X, [3]))
 
 
 if __name__ == '__main__':
     # execute only if run as the entry point into the program
-    main()
-    # kladblock()
+    # main()
+    kladblock()
