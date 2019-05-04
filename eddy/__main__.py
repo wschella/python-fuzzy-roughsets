@@ -68,11 +68,11 @@ def kladblock():
     all_attributes = list(range(X.shape[1]))
     concept = frs.fuzzy_concept(y, 1)
     # print("Concept", concept)
-    lower = frs.get_lower_approximation(X, all_attributes, concept)
+    # lower = frs.get_lower_approximation(X, all_attributes, concept)
     # print("Lower", lower)
-    # lower = np.array([0, 0, 1, 0, 0, 1, 1])
+    lower = np.array([1, 1, 0, 1, 1, 0, 0])
     covering = fl.get_local_covering(X, lower)
-    print("Kladblok covering:", covering)
+    print("Kladblok covering", covering)
 
 
 if __name__ == '__main__':

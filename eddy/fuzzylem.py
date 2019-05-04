@@ -146,7 +146,7 @@ def get_local_covering(U, lower_approximation: FuzzySet, alpha=0.0, beta=0.0) ->
 
 def get_block(U, attr: int, value: float) -> FuzzySet:
     range_ = np.ptp(U[:, attr])
-    return np.abs((U[:, attr] - value) / range_)
+    return 1 - np.abs((U[:, attr] - value) / range_)
 
 
 def get_covered(U, covering: Covering) -> FuzzySet:
@@ -194,8 +194,7 @@ def find_optimal_block(U, Sub: FuzzySet, visited_pairs: Set[AVPair]) -> AVPair:
             if score > current_max:
                 current_max = score
                 best_pairs = [(attr, value)]
-
-            if score == current_max:
+            elif score == current_max:
                 best_pairs.append((attr, value))
 
     # No ties
