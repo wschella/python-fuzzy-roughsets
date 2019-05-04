@@ -59,7 +59,7 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
         self.y_ = y  # pylint: disable=attribute-defined-outside-init
         self.rules_ = np.zeros((self.classes_.size,),  # pylint: disable=attribute-defined-outside-init
                                dtype=object)
-        n_cases, n_attributes = self.X_.shape
+        _n_cases, n_attributes = self.X_.shape
         all_attributes = list(range(n_attributes))
         for class_index, class_ in enumerate(self.classes_):
             concept = np.flatnonzero(self.y_ == class_)
@@ -88,17 +88,17 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
         # Input validation
         X = check_array(X, dtype=int)
 
-        (n_cases, _) = X.shape
-        (n_classes, _) = self.classes_.shape
+        n_cases, *_ = X.shape
+        n_classes, *_ = self.classes_.shape
 
         prediction = np.full((n_cases,), n_classes, dtype=int)
 
         covering_degree = np.zeros((n_cases, n_classes), dtype=float)
 
-        for case_i, case in enumerate(X):
+        for case_i, _case in enumerate(X):
             for class_i, _class in enumerate(self.classes_):
                 covering = self.rules_[class_i]
-                degree = get_covering_degree(self.X_, covering, case)
+                degree = get_covered(self.X_, covering)[case_i]
                 covering_degree[case_i, class_i] = degree
 
         # TODO: Check if works correctly
@@ -107,13 +107,8 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
         return prediction
 
 
-AVPair = Tuple[int, int]
+AVPair = Tuple[int, float]
 Covering = Set[FrozenSet[AVPair]]
-
-
-def get_covering_degree(U, covering: Covering, case) -> float:
-    # TODO
-    return 1
 
 
 def get_local_covering(U, lower_approximation: FuzzySet, alpha=0.1, beta=0.2) -> Covering:
@@ -177,6 +172,30 @@ def depends(U, complex_: Set[AVPair], concept: FuzzySet, alpha: float) -> bool:
 
 
 def find_optimal_block(U, Sub: FuzzySet, visited_pairs: Set[AVPair]) -> AVPair:
-    # TODO
-    raise Exception("Not implemented")
-    return (0, 0)
+
+    visited: Dict[int, Set[float]] = collections.defaultdict(set)
+    for attr, value in visited_pairs:
+        visited[attr].add(value)
+
+    current_max = 0
+    best_pairs: List[AVPair] = []
+    for attr, col in U.T:
+        filters = np.isin(col, np.array(list(visited[attr])), invert=True)
+        values, *_ = np.unique(col[filters])
+        for value in values:
+            block = get_block(U, attr, value)
+            score = np.sum(fuzzy_intersection(block, Sub))
+            if score > current_max:
+                current_max = score
+                best_pairs = [(attr, value)]
+
+            if score == current_max:
+                best_pairs.append((attr, value))
+
+    # No ties
+    if len(best_pairs) == 1:
+        return best_pairs[0]
+
+    # Tie, select one with smallest block
+    scores = np.array([np.sum(get_block(U, a, v)) for a, v in best_pairs])
+    return best_pairs[np.argmin(scores)]
