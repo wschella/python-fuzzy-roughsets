@@ -12,6 +12,7 @@ from sklearn.utils.multiclass import unique_labels
 from sklearn.metrics import euclidean_distances
 
 from eddy.fuzzyroughsets import get_lower_approximation, FuzzySet
+from eddy.fuzzy import fuzzy_intersection, fuzzy_complement, normal_implicator, fuzzy_union
 
 
 class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
@@ -111,9 +112,71 @@ Covering = Set[FrozenSet[AVPair]]
 
 
 def get_covering_degree(U, covering: Covering, case) -> float:
+    # TODO
     return 1
 
 
-def get_local_covering(U, lower_approximation: FuzzySet) -> Covering:
+def get_local_covering(U, lower_approximation: FuzzySet, alpha=0.1, beta=0.2) -> Covering:
+    B: List[float] = np.copy(lower_approximation)
+    G: List[float] = np.copy(lower_approximation)
 
-    return set()
+    covering: Covering = set()
+
+    while not covers_concept(U, covering, B, beta):
+        complex_: Set[AVPair] = set()
+        visited: Set[AVPair] = set()
+
+        while not complex_ or not depends(U, complex_, B, alpha):
+            (attr, value) = find_optimal_block(U, G, visited)
+            block = get_block(U, attr, value)
+            G = fuzzy_intersection(G, block)
+            complex_.add((attr, value))
+            visited.add((attr, value))
+
+         # Make minimal complex actually minimal
+        min_complex = complex_.copy()
+        for av_pair in complex_:
+            if depends(U, min_complex - set([av_pair]), B, alpha):
+                min_complex.remove(av_pair)
+
+        covering.add(frozenset(min_complex))
+        G = fuzzy_intersection(B, fuzzy_complement(get_covered(U, covering)))
+
+    return covering
+
+
+def get_block(U, attr: int, value: float) -> FuzzySet:
+    range_ = np.ptp(U[:, attr])
+    return np.abs((U[:, attr] - value) / range_)
+
+
+def get_covered(U, covering: Covering) -> FuzzySet:
+    covered = np.zeros((U.shape[0],), dtype=float)
+    for complex_ in covering:
+        block = get_complex_block(U, complex_)  # type: ignore
+        covered = fuzzy_union(covered, block)
+    return covered
+
+
+def covers_concept(U, covering: Covering, concept: FuzzySet, beta: float) -> bool:
+    covered = get_covered(U, covering)
+    return np.all(covered - concept <= beta)  # type: ignore
+
+
+def get_complex_block(U, complex_: Set[AVPair]) -> FuzzySet:
+    block = np.ones((U.shape[0],), dtype=float)
+    for attr, value in complex_:
+        block = fuzzy_intersection(block, get_block(U, attr, value))
+    return block
+
+
+def depends(U, complex_: Set[AVPair], concept: FuzzySet, alpha: float) -> bool:
+    block = get_complex_block(U, complex_)
+    subset = normal_implicator(block, concept)
+    return np.all(subset >= alpha)  # type: ignore
+
+
+def find_optimal_block(U, Sub: FuzzySet, visited_pairs: Set[AVPair]) -> AVPair:
+    # TODO
+    raise Exception("Not implemented")
+    return (0, 0)

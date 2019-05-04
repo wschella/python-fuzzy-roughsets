@@ -5,10 +5,9 @@ import scipy
 import sklearn
 
 from eddy.shared import elementary_sets
+from eddy.fuzzy import FuzzySet
 
 # TODO: Is target set a thing? or target fuzzy set?
-
-FuzzySet = List[float]
 
 
 def fuzzy_indiscernability(U, attributes: List[int]) -> List[List[float]]:
