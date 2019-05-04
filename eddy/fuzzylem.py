@@ -1,4 +1,4 @@
-from typing import Set, List, Tuple, Dict
+from typing import Set, List, Tuple, Dict, FrozenSet
 from functools import reduce
 import collections
 import operator
@@ -11,7 +11,7 @@ from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 from sklearn.metrics import euclidean_distances
 
-from eddy.fuzzyroughsets import get_lower_approximation
+from eddy.fuzzyroughsets import get_lower_approximation, FuzzySet
 
 
 class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
@@ -49,7 +49,8 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
         # Check that X and y have correct shape
         X, y = check_X_y(X, y, dtype=int, multi_output=True)
 
-        # TODO: Regression?
+        # TODO: Regression? --> Later
+
         # Store the classes seen during fit
         self.classes_ = unique_labels(y)  # pylint: disable=attribute-defined-outside-init
 
@@ -86,6 +87,33 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
         # Input validation
         X = check_array(X, dtype=int)
 
-        prediction = np.full((X.shape[0],), self.classes_[0], dtype=int)
+        (n_cases, _) = X.shape
+        (n_classes, _) = self.classes_.shape
+
+        prediction = np.full((n_cases,), n_classes, dtype=int)
+
+        covering_degree = np.zeros((n_cases, n_classes), dtype=float)
+
+        for case_i, case in enumerate(X):
+            for class_i, _class in enumerate(self.classes_):
+                covering = self.rules_[class_i]
+                degree = get_covering_degree(self.X_, covering, case)
+                covering_degree[case_i, class_i] = degree
+
+        # TODO: Check if works correctly
+        prediction = self.classes_[np.argmax(covering_degree)]
 
         return prediction
+
+
+AVPair = Tuple[int, int]
+Covering = Set[FrozenSet[AVPair]]
+
+
+def get_covering_degree(U, covering: Covering, case) -> float:
+    return 1
+
+
+def get_local_covering(U, lower_approximation: FuzzySet) -> Covering:
+
+    return set()
