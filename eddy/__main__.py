@@ -9,6 +9,7 @@ from eddy.lem2 import LEM2Classifier, find_optimal_block
 
 import eddy.datasets as data
 import eddy.fuzzyroughsets as frs
+import eddy.fuzzylem as fl
 
 names = [
     "LEM2"
@@ -52,20 +53,26 @@ def main():
 
 
 def kladblock():
-    X = np.array([
-        [4, 1, 1, 0],
-        [3, 1, 0, 1],
-        [2, 0, 0, 0],
-        [2, 1, 1, 1],
-        [3, 0, 1, 0],
-        [3, 0, 0, 0],
-        [2, 0, 1, 1]
+    table1_1 = np.array([
+        [3, 1, 1, 0, 1],
+        [2, 1, 0, 1, 1],
+        [1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1],
+        [2, 0, 1, 0, 1],
+        [2, 0, 0, 0, 0],
+        [1, 0, 1, 0, 0]
     ])
-    y = np.array([1, 1, 0, 1, 1, 0, 0])
+
+    X = table1_1[:, :-1]
+    y = table1_1[:, -1]
+    all_attributes = list(range(X.shape[1]))
     concept = frs.fuzzy_concept(y, 1)
-    print(frs.get_lower_approximation(X, [0, 1, 2, 3], concept))
-    # print(X)
-    # print(frs.fuzzy_indiscernability(X, [3]))
+    # print("Concept", concept)
+    lower = frs.get_lower_approximation(X, all_attributes, concept)
+    # print("Lower", lower)
+    # lower = np.array([0, 0, 1, 0, 0, 1, 1])
+    covering = fl.get_local_covering(X, lower)
+    print("Kladblok covering:", covering)
 
 
 if __name__ == '__main__':

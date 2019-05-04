@@ -59,15 +59,9 @@ def get_lower_approximation(U, attributes: List[int], target: FuzzySet) -> Fuzzy
     lower : ndarray, shape (n_samples,)
         Array of membership degree of all samples
     """
-    print(U)
-    print(attributes)
-    print(target)
     (n_samples, _) = U.shape
     I = fuzzy_indiscernability(U, attributes)
-    print(I)
     T = np.tile(target, (n_samples, 1))
-    print(T)
     implicator = np.maximum(1 - I, T)  # type: ignore
-    print(implicator)
     infimum = np.min(implicator, axis=1)
     return infimum

@@ -23,5 +23,9 @@ def fuzzy_complement(A: FuzzySet) -> FuzzySet:
     return 1 - A  # type: ignore
 
 
+def fuzzy_difference(A: FuzzySet, B: FuzzySet) -> FuzzySet:
+    return fuzzy_intersection(A, fuzzy_complement(B))
+
+
 def normal_implicator(A: FuzzySet, B: FuzzySet) -> FuzzySet:
     return np.maximum(1 - A, B)  # type: ignore

@@ -12,7 +12,7 @@ from sklearn.utils.multiclass import unique_labels
 from sklearn.metrics import euclidean_distances
 
 from eddy.fuzzyroughsets import get_lower_approximation, FuzzySet
-from eddy.fuzzy import fuzzy_intersection, fuzzy_complement, normal_implicator, fuzzy_union
+from eddy.fuzzy import fuzzy_intersection, fuzzy_complement, normal_implicator, fuzzy_union, fuzzy_difference
 
 
 class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
@@ -111,7 +111,8 @@ AVPair = Tuple[int, float]
 Covering = Set[FrozenSet[AVPair]]
 
 
-def get_local_covering(U, lower_approximation: FuzzySet, alpha=0.1, beta=0.2) -> Covering:
+# @pysnooper.snoop('./logs/fuzzy_local_covering.log')
+def get_local_covering(U, lower_approximation: FuzzySet, alpha=0.0, beta=0.0) -> Covering:
     B: List[float] = np.copy(lower_approximation)
     G: List[float] = np.copy(lower_approximation)
 
@@ -123,6 +124,7 @@ def get_local_covering(U, lower_approximation: FuzzySet, alpha=0.1, beta=0.2) ->
 
         while not complex_ or not depends(U, complex_, B, alpha):
             (attr, value) = find_optimal_block(U, G, visited)
+            # print("Optimal block", attr, value)
             block = get_block(U, attr, value)
             G = fuzzy_intersection(G, block)
             complex_.add((attr, value))
@@ -131,11 +133,13 @@ def get_local_covering(U, lower_approximation: FuzzySet, alpha=0.1, beta=0.2) ->
          # Make minimal complex actually minimal
         min_complex = complex_.copy()
         for av_pair in complex_:
-            if depends(U, min_complex - set([av_pair]), B, alpha):
+            if len(min_complex) > 1 and depends(U, min_complex - set([av_pair]), B, alpha):
                 min_complex.remove(av_pair)
 
         covering.add(frozenset(min_complex))
         G = fuzzy_intersection(B, fuzzy_complement(get_covered(U, covering)))
+
+    # TODO Make covering minimal
 
     return covering
 
@@ -155,7 +159,9 @@ def get_covered(U, covering: Covering) -> FuzzySet:
 
 def covers_concept(U, covering: Covering, concept: FuzzySet, beta: float) -> bool:
     covered = get_covered(U, covering)
-    return np.all(covered - concept <= beta)  # type: ignore
+    symmetric_diff = (np.sum(fuzzy_difference(covered, concept)) +  # type: ignore
+                      np.sum(fuzzy_difference(concept, covered))) / np.sum(fuzzy_union(covered, concept))
+    return 1 - symmetric_diff > beta
 
 
 def get_complex_block(U, complex_: Set[AVPair]) -> FuzzySet:
@@ -179,9 +185,9 @@ def find_optimal_block(U, Sub: FuzzySet, visited_pairs: Set[AVPair]) -> AVPair:
 
     current_max = 0
     best_pairs: List[AVPair] = []
-    for attr, col in U.T:
-        filters = np.isin(col, np.array(list(visited[attr])), invert=True)
-        values, *_ = np.unique(col[filters])
+    for attr, col in enumerate(U.T):
+        filters = np.in1d(col, np.array(list(visited[attr])), invert=True)
+        values = np.unique(col[filters])
         for value in values:
             block = get_block(U, attr, value)
             score = np.sum(fuzzy_intersection(block, Sub))
