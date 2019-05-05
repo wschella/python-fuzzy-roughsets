@@ -18,13 +18,14 @@ names = [
 
 classifiers = [
     # LEM2Classifier(),
-    FuzzyLEM2Classifier(),
+    FuzzyLEM2Classifier(alpha=0.02, beta=0.025),
 ]
 
 datasets = [
     # data.paperdata(),
     # data.paperdata2(),
     data.wisconsin(),
+    # data.wdbc(),
 ]
 
 
@@ -51,6 +52,7 @@ def main():
             print(f"---------------------- Using {c_name} ----------------------")
             clf.fit(X_train, y_train)
             y_pred = clf.predict(X_test)
+            # print(y_pred)
             print(classification_report(y_test, y_pred))
 
 
@@ -73,11 +75,11 @@ def kladblock():
     # lower = frs.get_lower_approximation(X, all_attributes, concept)
     # print("Lower", lower)
     lower = np.array([1, 1, 0, 1, 1, 0, 0])
-    covering = fl.get_local_covering(X, lower)
+    covering = fl.get_local_covering(X, lower, alpha=0.05, beta=0.2)
     print("Kladblok covering", covering)
 
 
 if __name__ == '__main__':
     # execute only if run as the entry point into the program
-    # main()
-    kladblock()
+    main()
+    # kladblock()

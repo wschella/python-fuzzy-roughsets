@@ -46,7 +46,6 @@ class TestGetLocalCovering(unittest.TestCase):
         concept = rs.fuzzy_concept(y, 1)
         lower = rs.get_lower_approximation(X, all_attributes, concept)
         covering = eddy.get_local_covering(X, lower)
-        print(covering)
         self.assertEqual(
             covering,
             set([frozenset([(1, 1)]), frozenset([(0, 2), (2, 1)])])

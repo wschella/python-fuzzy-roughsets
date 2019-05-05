@@ -42,5 +42,24 @@ def wisconsin():
     ), "wisconsin")
 
 
+def wdbc():
+    converters = {
+        b'B': 0.0,
+        b'M': 1.0,
+    }
+
+    def convert(s):
+        return converters[s]
+
+    return (split(
+        np.genfromtxt(
+            open('data/wdbc569(30:0:0)2.csv', 'rb'),
+            dtype=float, delimiter=",",
+            skip_header=1,
+            converters={30: convert}
+        )
+    ), 'wdbc')
+
+
 def split(data):
     return data[:, :-1], data[:, -1]

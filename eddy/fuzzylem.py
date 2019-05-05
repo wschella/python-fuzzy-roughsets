@@ -1,18 +1,19 @@
 from typing import Set, List, Tuple, Dict, FrozenSet
-from functools import reduce
 import collections
-import operator
 
 import numpy as np
-import pysnooper
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
-from sklearn.metrics import euclidean_distances
 
 from eddy.fuzzyroughsets import get_lower_approximation, FuzzySet, fuzzy_concept
-from eddy.fuzzy import fuzzy_intersection, fuzzy_complement, normal_implicator, fuzzy_union, fuzzy_difference
+from eddy.fuzzy import \
+    fuzzy_intersection, \
+    fuzzy_complement, \
+    normal_implicator, \
+    fuzzy_union, \
+    fuzzy_difference
 
 
 class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
@@ -30,10 +31,11 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
         The classes seen at :meth:`fit`.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, alpha=0.05, beta=0.2):
+        self.alpha = alpha
+        self.beta = beta
 
-    @pysnooper.snoop('./logs/fit.log')
+    # @pysnooper.snoop('./logs/fit.log')
     def fit(self, X, y):
         """
         Parameters
@@ -48,7 +50,7 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
             Returns self.
         """
         # Check that X and y have correct shape
-        X, y = check_X_y(X, y, dtype=int, multi_output=True)
+        X, y = check_X_y(X, y, dtype=float, multi_output=True)
 
         # TODO: Regression? --> Later
 
@@ -64,7 +66,12 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
         for class_index, class_ in enumerate(self.classes_):
             concept = fuzzy_concept(self.y_, class_)
             lower = get_lower_approximation(self.X_, all_attributes, concept)
-            covering = get_local_covering(self.X_, lower)
+            covering = get_local_covering(
+                self.X_,
+                lower,
+                alpha=self.alpha,
+                beta=self.beta
+            )
             self.rules_[class_index] = covering
 
         # Return the classifier
@@ -102,7 +109,7 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
                 covering_degree[case_i, class_i] = degree
 
         # TODO: Check if works correctly
-        prediction = self.classes_[np.argmax(covering_degree)]
+        prediction = self.classes_[np.argmax(covering_degree, axis=1)]
 
         return prediction
 
@@ -112,7 +119,7 @@ Covering = Set[FrozenSet[AVPair]]
 
 
 # @pysnooper.snoop('./logs/fuzzy_local_covering.log')
-def get_local_covering(U, lower_approximation: FuzzySet, alpha=0.0, beta=0.0) -> Covering:
+def get_local_covering(U, lower_approximation: FuzzySet, alpha: float, beta: float) -> Covering:
     B: List[float] = np.copy(lower_approximation)
     G: List[float] = np.copy(lower_approximation)
 
@@ -160,17 +167,15 @@ def get_covered(U, covering: Covering) -> FuzzySet:
 
 def covers_concept(U, covering: Covering, concept: FuzzySet, beta: float) -> bool:
     covered = get_covered(U, covering)
-    symmetric_diff = (np.sum(fuzzy_difference(covered, concept)) +  # type: ignore
-                      np.sum(fuzzy_difference(concept, covered))) / np.sum(fuzzy_union(covered, concept))
-    print(covering)
-    print(concept)
-    print(covered)
-    print(np.sum(fuzzy_difference(covered, concept)))
-    print(np.sum(fuzzy_difference(concept, covered)))
-    print(np.sum(fuzzy_union(covered, concept)))
-    print(symmetric_diff)
-    input()
-    return symmetric_diff <= beta
+
+    # Symmetric diff based
+    # symmetric_diff = (np.sum(fuzzy_difference(covered, concept)) +  # type: ignore
+    #                   np.sum(fuzzy_difference(concept, covered))) \
+    #     / np.sum(fuzzy_union(covered, concept))
+    # return not symmetric_diff > beta
+
+    # Just covers
+    return np.all(concept - covered <= beta)  # type: ignore
 
 
 def get_complex_block(U, complex_: Set[AVPair]) -> FuzzySet:
@@ -182,13 +187,8 @@ def get_complex_block(U, complex_: Set[AVPair]) -> FuzzySet:
 
 def depends(U, complex_: Set[AVPair], concept: FuzzySet, alpha: float) -> bool:
     block = get_complex_block(U, complex_)
-    subset = normal_implicator(block, concept)
-    print("Depend", complex_)
-    print(concept)
-    print(block)
-    print(subset)
-    print("")
-    return np.all(subset > alpha)  # type: ignore
+    impl = normal_implicator(block, concept)
+    return np.all(impl > alpha)  # type: ignore
 
 
 def find_optimal_block(U, G: FuzzySet, visited_pairs: Set[AVPair]) -> AVPair:
