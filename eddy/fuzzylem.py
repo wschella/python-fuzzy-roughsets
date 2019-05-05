@@ -105,10 +105,9 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
         for case_i, _case in enumerate(X):
             for class_i, _class in enumerate(self.classes_):
                 covering = self.rules_[class_i]
-                degree = get_covered(self.X_, covering)[case_i]
+                degree = get_covered(X, covering)[case_i]
                 covering_degree[case_i, class_i] = degree
 
-        # TODO: Check if works correctly
         prediction = self.classes_[np.argmax(covering_degree, axis=1)]
 
         return prediction

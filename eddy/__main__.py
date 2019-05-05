@@ -24,8 +24,8 @@ classifiers = [
 datasets = [
     # data.paperdata(),
     # data.paperdata2(),
-    data.wisconsin(),
-    # data.wdbc(),
+    # data.wisconsin(),
+    data.wdbc(),
 ]
 
 
