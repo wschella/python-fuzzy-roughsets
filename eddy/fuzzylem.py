@@ -72,6 +72,7 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
                 alpha=self.alpha,
                 beta=self.beta
             )
+            print(covering)
             self.rules_[class_index] = covering
 
         # Return the classifier
@@ -93,12 +94,12 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
         check_is_fitted(self, ['X_', 'y_'])
 
         # Input validation
-        X = check_array(X, dtype=int)
+        X = check_array(X, dtype=float)
 
         n_cases, *_ = X.shape
         n_classes, *_ = self.classes_.shape
 
-        prediction = np.full((n_cases,), n_classes, dtype=int)
+        prediction = np.full((n_cases,), n_classes, dtype=float)
 
         covering_degree = np.zeros((n_cases, n_classes), dtype=float)
 
@@ -186,6 +187,11 @@ def get_complex_block(U, complex_: Set[AVPair]) -> FuzzySet:
 
 def depends(U, complex_: Set[AVPair], concept: FuzzySet, alpha: float) -> bool:
     block = get_complex_block(U, complex_)
+
+    # Standard subset
+    # return np.all(block <= concept)
+
+    # Implicator
     impl = normal_implicator(block, concept)
     return np.all(impl > alpha)  # type: ignore
 

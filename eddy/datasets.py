@@ -61,5 +61,15 @@ def wdbc():
     ), 'wdbc')
 
 
+def monk():
+    return (split(
+        np.genfromtxt(
+            open('data/monk-2432(0:6:0)2.csv', 'rb'),
+            dtype=float, delimiter=",",
+            skip_header=1,
+        )
+    ), "monk")
+
+
 def split(data):
     return data[:, :-1], data[:, -1]
