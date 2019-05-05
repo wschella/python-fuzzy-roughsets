@@ -11,7 +11,7 @@ from sklearn.utils.validation import check_X_y, check_array, check_is_fitted
 from sklearn.utils.multiclass import unique_labels
 from sklearn.metrics import euclidean_distances
 
-from eddy.fuzzyroughsets import get_lower_approximation, FuzzySet
+from eddy.fuzzyroughsets import get_lower_approximation, FuzzySet, fuzzy_concept
 from eddy.fuzzy import fuzzy_intersection, fuzzy_complement, normal_implicator, fuzzy_union, fuzzy_difference
 
 
@@ -62,7 +62,7 @@ class FuzzyLEM2Classifier(BaseEstimator, ClassifierMixin):
         _n_cases, n_attributes = self.X_.shape
         all_attributes = list(range(n_attributes))
         for class_index, class_ in enumerate(self.classes_):
-            concept = np.flatnonzero(self.y_ == class_)
+            concept = fuzzy_concept(self.y_, class_)
             lower = get_lower_approximation(self.X_, all_attributes, concept)
             covering = get_local_covering(self.X_, lower)
             self.rules_[class_index] = covering
@@ -145,6 +145,7 @@ def get_local_covering(U, lower_approximation: FuzzySet, alpha=0.0, beta=0.0) ->
 
 
 def get_block(U, attr: int, value: float) -> FuzzySet:
+    # TODO: Use indiscernability relation function
     range_ = np.ptp(U[:, attr])
     return 1 - np.abs((U[:, attr] - value) / range_)
 
@@ -161,7 +162,15 @@ def covers_concept(U, covering: Covering, concept: FuzzySet, beta: float) -> boo
     covered = get_covered(U, covering)
     symmetric_diff = (np.sum(fuzzy_difference(covered, concept)) +  # type: ignore
                       np.sum(fuzzy_difference(concept, covered))) / np.sum(fuzzy_union(covered, concept))
-    return 1 - symmetric_diff > beta
+    print(covering)
+    print(concept)
+    print(covered)
+    print(np.sum(fuzzy_difference(covered, concept)))
+    print(np.sum(fuzzy_difference(concept, covered)))
+    print(np.sum(fuzzy_union(covered, concept)))
+    print(symmetric_diff)
+    input()
+    return symmetric_diff <= beta
 
 
 def get_complex_block(U, complex_: Set[AVPair]) -> FuzzySet:
@@ -174,10 +183,15 @@ def get_complex_block(U, complex_: Set[AVPair]) -> FuzzySet:
 def depends(U, complex_: Set[AVPair], concept: FuzzySet, alpha: float) -> bool:
     block = get_complex_block(U, complex_)
     subset = normal_implicator(block, concept)
-    return np.all(subset >= alpha)  # type: ignore
+    print("Depend", complex_)
+    print(concept)
+    print(block)
+    print(subset)
+    print("")
+    return np.all(subset > alpha)  # type: ignore
 
 
-def find_optimal_block(U, Sub: FuzzySet, visited_pairs: Set[AVPair]) -> AVPair:
+def find_optimal_block(U, G: FuzzySet, visited_pairs: Set[AVPair]) -> AVPair:
 
     visited: Dict[int, Set[float]] = collections.defaultdict(set)
     for attr, value in visited_pairs:
@@ -190,7 +204,7 @@ def find_optimal_block(U, Sub: FuzzySet, visited_pairs: Set[AVPair]) -> AVPair:
         values = np.unique(col[filters])
         for value in values:
             block = get_block(U, attr, value)
-            score = np.sum(fuzzy_intersection(block, Sub))
+            score = np.sum(fuzzy_intersection(block, G))
             if score > current_max:
                 current_max = score
                 best_pairs = [(attr, value)]

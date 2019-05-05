@@ -6,6 +6,7 @@ from sklearn.metrics import classification_report
 import scipy
 
 from eddy.lem2 import LEM2Classifier, find_optimal_block
+from eddy.fuzzylem import FuzzyLEM2Classifier
 
 import eddy.datasets as data
 import eddy.fuzzyroughsets as frs
@@ -16,7 +17,8 @@ names = [
 ]
 
 classifiers = [
-    LEM2Classifier(),
+    # LEM2Classifier(),
+    FuzzyLEM2Classifier(),
 ]
 
 datasets = [

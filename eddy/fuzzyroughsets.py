@@ -7,7 +7,7 @@ import sklearn
 from eddy.shared import elementary_sets
 from eddy.fuzzy import FuzzySet
 
-# TODO: Is target set a thing? or target fuzzy set?
+# TODO: Respect nominal data features
 
 
 def fuzzy_indiscernability(U, attributes: List[int]) -> List[List[float]]:
