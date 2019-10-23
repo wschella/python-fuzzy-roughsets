@@ -2,7 +2,7 @@
 
 This is a rudimentary library that implements some basic algorithms related to (fuzzy) rough sets. Originated as a project for the Soft Computing course at Ghent University 2018-2019.
 
-**Warning:** Do not use in production. This only serves as some didactic material.
+**Warning:** This code is more then likely wrong in multiple places. Please use this only as a rudimentary accompaniement to existing implementations and theory.
 
 ## Contents
 
